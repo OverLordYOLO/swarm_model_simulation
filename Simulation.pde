@@ -56,7 +56,9 @@ class Simulation {
   Drone createDrone(int id) { 
     PVector position = new PVector(random(droneSize, worldSize-droneSize), random(droneSize, worldSize-droneSize));
     PVector velocity = new PVector();
-    color droneColor = color(random(255), random(255), random(255));
+    colorMode(HSB, 255);
+    color droneColor = color(random(255), 255, 255);
+    colorMode(RGB, 255);
     Drone newDrone = new Drone(position, velocity, droneColor, id, droneSize, droneCenterPower, droneCollisionRange, droneCollisionPower, droneMaxSpeed);
     return newDrone;
   }
@@ -151,15 +153,6 @@ class Simulation {
   }
 
   ArrayList<PVector> Intersect2Circles(PVector A, float a, PVector B, float b ) {
-    // A, B = [ x, y ]
-    // return = [ Q1, Q2 ] or [ Q ] or [] where Q = [ x, y ]
-
-    /*
-  noFill(); 
-     stroke(0);
-     ellipse(A.x, A.y, 2*a, 2*a);
-     ellipse(B.x, B.y, 2*b, 2*b);
-     */
 
     float AB0 = B.x - A.x;
     float AB1 = B.y - A.y;
@@ -201,7 +194,7 @@ class Simulation {
     newPoints.add(new PVector(Q1x, Q1y));
     newPoints.add(new PVector(Q2x, Q2y));
 
-    fill(255, 2, 2);
+    fill(255, 2, 2, 80);
     int size = 8;
     rect (Q1x-size/2, Q1y-size/2, size, size);
     rect (Q2x-size/2, Q2y-size/2, size, size);

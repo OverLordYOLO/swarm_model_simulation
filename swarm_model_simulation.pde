@@ -20,7 +20,7 @@ void setup() {
   CreateButtons();
   startSimulation = false;
   SetWindowParameters(settings);
-
+  CreateNewSimulation();
   if (!fileExists("settings.txt")) {
     SaveSettings(CreateDefaultSettings());
   }
@@ -72,7 +72,7 @@ void ShowParameters() {
   posY -= fontSize + 5;
   text("Maximum error: " + simulation.maxError, posX, posY);
   posY -= fontSize + 5;
-  if (simulation.measuredError == 0) text("Measured error: N/A", posX, posY);
+  if (simulation.measuredError == -1) text("Measured error: N/A", posX, posY);
   else text("Measured error: " + simulation.measuredError, posX, posY);
 }
 
@@ -134,7 +134,7 @@ Table LoadSettings() {
       String[] splitLine = line.split("=");
       float newValue = float(splitLine[1]);
       if (splitLine.length > 1 & !(newValue != newValue)) { // second check if NaN (weird processing thing)
-        TableRow oldRow = settings.findRow(splitLine[0], "property"); // <---------------------------------------------------------------- what if the row does not exist???
+        TableRow oldRow = settings.findRow(splitLine[0], "property");
         if (oldRow != null) {
           TableRow newRow = newSettings.addRow();
           newRow.setString("property", splitLine[0]);

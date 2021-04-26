@@ -104,6 +104,10 @@ void ShowParameters() {
   posY -= fontSize + 5;
   if (simulation.measuredError == -1) text("Measured error: N/A", posX, posY);
   else text("Measured error: " + simulation.measuredError, posX, posY);
+  posY -= fontSize + 5;
+  if (simulation.isFinished == true) {
+    if (simulation.isSuccessful) text("Simulation successful", posX, posY);
+    else text("Simulation failed", posX, posY);}
 }
 
 void ShowButtons() {

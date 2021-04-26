@@ -26,6 +26,8 @@ class Simulation {
 
   float maxError;
   float measuredError;
+  
+  boolean isSuccessful;
 
 
   Simulation(int worldSize, int droneCount, int droneSize, float droneCollisionRange, int gatherCircleRadius, int droneMaxSpeed, float droneCenterPower, float droneCollisionPower, int signalError, int tresholdMult, int signalSize, float maxError) {
@@ -125,6 +127,7 @@ class Simulation {
 
     stepNumber++;
     snapshot = get();
+    isSuccessful = this.measuredError < this.maxError;
   }
 
   float CalculateMeasuredError(ArrayList<PVector> cluster) {

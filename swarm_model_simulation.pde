@@ -1,4 +1,4 @@
- //<>// //<>// //<>// //<>//
+//<>// //<>// //<>// //<>// //<>//
 Button startButton, saveCanvasButton, loadSettingsButton, saveDefaultSettingsButton;
 ArrayList<Button> allButtons;
 boolean startSimulation;
@@ -9,13 +9,15 @@ Table settings;
 
 boolean saveScreenshot;
 
+boolean isLooping;
+
 void setup() {
   size(10, 10);
-  background(255);
+  background(0);
   noStroke();
   smooth();
   saveScreenshot = false;
-
+  isLooping = true;
   settings = CreateDefaultSettings();
   CreateButtons();
   startSimulation = false;
@@ -27,30 +29,58 @@ void setup() {
 }
 
 void draw() {
-  background(0);
-  if (startSimulation) {
-    simulation.RunStep();
+  if (isLooping) {
+    background(0);
+    if (startSimulation) {
+      simulation.RunStep();
+    }
+    ShowParameters();
   }
-  ShowParameters();
   if (saveScreenshot) {
-   SaveScreenshot();
-   saveScreenshot = false;
+    SaveScreenshot();
+    saveScreenshot = false;
   }
   ShowButtons();
 }
 
 void mousePressed() {
   if (startButton.IsHoveringOver()) {
-    startSimulation = true;
-    CreateNewSimulation();
+    StartButtonPressed();
   } else if (saveCanvasButton.IsHoveringOver()) {
-    saveScreenshot = true;
+    SaveScreenshotButtonPressed();
   } else if (loadSettingsButton.IsHoveringOver()) {
-    settings = LoadSettings();
-    SetWindowParameters(settings);
+    LoadSettingsButtonPressed();
     for (Button button : allButtons) button.Resize(floor(GetValueFromSettings("buttonFontSize")));
     PlaceButtons();
   } else if (saveDefaultSettingsButton.IsHoveringOver()) SaveSettings(CreateDefaultSettings());
+}
+
+void keyPressed() {
+  if (key == ' ') {
+    PauseButtonPressed();
+  } else if (key == 'r') {
+    StartButtonPressed();
+  } else if (key == 'l') {
+    LoadSettingsButtonPressed();
+  } else if (key == 's') {
+    SaveScreenshotButtonPressed();
+  }
+}
+void PauseButtonPressed() {
+  isLooping = !isLooping;
+}
+
+void StartButtonPressed() {
+  startSimulation = true;
+  CreateNewSimulation();
+  isLooping = true;
+}
+void LoadSettingsButtonPressed() {
+  settings = LoadSettings();
+  SetWindowParameters(settings);
+}
+void SaveScreenshotButtonPressed() {
+  saveScreenshot = true;
 }
 
 void SaveScreenshot() {
@@ -85,7 +115,7 @@ void ShowButtons() {
 
 void CreateButtons() {
   int btnFontSize = floor(GetValueFromSettings("buttonFontSize"));
-  startButton = new Button(10, 10, btnFontSize,  color(10, 220, 10), color(20, 255, 20), color(15), "Re/Start");
+  startButton = new Button(10, 10, btnFontSize, color(10, 220, 10), color(20, 255, 20), color(15), "Re/Start");
   saveCanvasButton = new Button(10, 10, btnFontSize, color(150), color(200), color(15), "Save canvas");
   loadSettingsButton = new Button(10, 10, btnFontSize, color(150), color(200), color(15), "Load settings");
   saveDefaultSettingsButton = new Button(10, 10, btnFontSize, color(150), color(200), color(15), "Save default settings");
@@ -188,7 +218,7 @@ Table CreateDefaultSettings() {
   settings.setString(11, "property", "maxError");
   settings.setFloat(11, "value", 10);
   settings.setString(12, "property", "buttonFontSize");
-  settings.setFloat(12, "value", 20);
+  settings.setFloat(12, "value", 16);
 
   return settings;
 }
@@ -215,7 +245,7 @@ boolean fileExists(String fileName) {
 }
 
 void SetWindowParameters(Table settings) {
-  surface.setTitle("Simple drone swarm signal detection simulation");
+  surface.setTitle("Drone swarm signal detection simulation");
   int windowSize = int(settings.findRow("worldSize", "property").getFloat("value"));
   surface.setSize(windowSize, windowSize);
   surface.setLocation(10, 10);

@@ -33,7 +33,7 @@ class Simulation {
     this.droneCount = droneCount;
     this.droneSize = droneSize;
     this.droneCollisionRange = droneCollisionRange;
-    this.gatherCircleRadius = gatherCircleRadius;
+    this.gatherCircleRadius = gatherCircleRadius == 0 ? ceil(sqrt(2) * (sqrt(droneCount)*droneCollisionRange)) : gatherCircleRadius;
     this.droneMaxSpeed = droneMaxSpeed;
     this.droneCenterPower = droneCenterPower;
     this.droneCollisionPower = droneCollisionPower;
@@ -43,7 +43,7 @@ class Simulation {
     this.tresholdMult = tresholdMult;
     this.signalSize = signalSize;
     this.maxError = maxError;
-    this.measuredError = 0;
+    this.measuredError = -1;
 
     for (int i = 0; i < droneCount; i = i+1) {
       drones.add(createDrone(i));
@@ -106,20 +106,22 @@ class Simulation {
     }
     ArrayList<PVector> allIntersections = new ArrayList<PVector>();
     for (int i = 0; i < drones.size() -1; i++) {
+        Drone curDrone = drones.get(i);
       for (int j = i+1; j < drones.size(); j++) {
-        ArrayList<PVector> newIntersections = Intersect2Circles(drones.get(i).position, drones.get(i).distance, drones.get(j).position, drones.get(j).distance);
+        ArrayList<PVector> newIntersections = IntersectTwoCircles(curDrone.position, curDrone.distance, drones.get(j).position, drones.get(j).distance);
         if (newIntersections != null) {
           allIntersections.addAll(newIntersections);
         }
       }
     }
+    ShowIntersections(allIntersections);
     ArrayList<PVector> closestCluster = FindCluster(allIntersections);
+    this.measuredError = CalculateMeasuredError(closestCluster);
     for (PVector intersection : closestCluster) {
       fill(0, 0, 255);
       rect (intersection.x, intersection.y, 8, 8);
     }
-    
-    measuredError = CalculateMeasuredError(closestCluster);
+
 
     stepNumber++;
     snapshot = get();
@@ -152,52 +154,44 @@ class Simulation {
     return newVector;
   }
 
-  ArrayList<PVector> Intersect2Circles(PVector A, float a, PVector B, float b ) {
+  // modified code original for JavaScript by wabis: http://walter.bislins.ch/blog/index.asp?page=Schnittpunkte+zweier+Kreise+berechnen+%28JavaScript%29
+  ArrayList<PVector> IntersectTwoCircles(PVector posA, float radiusA, PVector posB, float radiusB ) {
+    ArrayList<PVector> newPoints = new ArrayList<PVector>();
 
-    float AB0 = B.x - A.x;
-    float AB1 = B.y - A.y;
+    float pointAB0 = posB.x - posA.x;
+    float pointAB1 = posB.y - posA.y;
+    if (posA.dist(posB) == 0) return null;
+    float c = sqrt( pointAB0 * pointAB0 + pointAB1 * pointAB1 );
+    if (c == 0) return null;
 
-    float c = sqrt( AB0 * AB0 + AB1 * AB1 );
-    if (c == 0) {
-      // same center: A = B
-      return null;
-    }
+    float x = (sq(radiusA) + sq(c) - sq(radiusB)) / (2*c);
+    float y = sq(radiusA) - sq(x);
+    if (y < 0) return null;
 
-    float x = (a*a + c*c - b*b) / (2*c);
-    float y = a*a - x*x;
-    if (y < 0) {
-      // no intersection
-      return null;
-    }
-    if (y > 0) 
+    if (y > 0) {
       y = sqrt( y );
+    }
 
-    // compute unit vectors ex and ey
-    float ex0 = AB0 / c;
-    float ex1 = AB1 / c;
+    float ex0 = pointAB0 / c;
+    float ex1 = pointAB1 / c;
     float ey0 = -ex1;
     float ey1 =  ex0;
-    float Q1x = A.x + x * ex0;
-    float Q1y = A.y + x * ex1;
+    float Q1x = posA.x + x * ex0;
+    float Q1y = posA.y + x * ex1;
+    float Q2x;
+    float Q2y;
 
-    ArrayList<PVector> newPoints = new ArrayList<PVector>();
     if (y == 0) {
-      // one touch point
       newPoints.add(new PVector(Q1x, Q1y));
+    } else {
+      Q2x = Q1x - y * ey0;
+      Q2y = Q1y - y * ey1;
+      Q1x += y * ey0;
+      Q1y += y * ey1;
+      newPoints.add(new PVector(Q1x, Q1y));
+      newPoints.add(new PVector(Q2x, Q2y));
     }
 
-    // two intersections
-    float Q2x = Q1x - y * ey0;
-    float Q2y = Q1y - y * ey1;
-    Q1x += y * ey0;
-    Q1y += y * ey1;
-    newPoints.add(new PVector(Q1x, Q1y));
-    newPoints.add(new PVector(Q2x, Q2y));
-
-    fill(255, 2, 2, 80);
-    int size = 8;
-    rect (Q1x-size/2, Q1y-size/2, size, size);
-    rect (Q2x-size/2, Q2y-size/2, size, size);
     return newPoints;
   }
 
@@ -220,6 +214,14 @@ class Simulation {
       }
     }
     return biggestCluster;
+  }
+
+  void ShowIntersections(ArrayList<PVector> positions) {
+    for (PVector position : positions) {
+      fill(255, 2, 2, 80);
+      int size = 8;
+      rect (position.x-size/2, position.y-size/2, size, size);
+    }
   }
 
   void ShowSignal() {

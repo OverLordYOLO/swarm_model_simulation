@@ -14,7 +14,7 @@ import java.io.IOException;
 
 public class swarm_model_simulation extends PApplet {
 
- //<>// //<>// //<>// //<>//
+//<>// //<>// //<>// //<>//
 Button startButton, saveCanvasButton, loadSettingsButton, saveDefaultSettingsButton;
 ArrayList<Button> allButtons;
 boolean startSimulation;
@@ -25,48 +25,78 @@ Table settings;
 
 boolean saveScreenshot;
 
+boolean isLooping;
+
 public void setup() {
   
-  background(255);
+  background(0);
   noStroke();
   
   saveScreenshot = false;
-
+  isLooping = true;
   settings = CreateDefaultSettings();
   CreateButtons();
   startSimulation = false;
   SetWindowParameters(settings);
-
+  CreateNewSimulation();
   if (!fileExists("settings.txt")) {
     SaveSettings(CreateDefaultSettings());
   }
 }
 
 public void draw() {
-  background(0);
-  if (startSimulation) {
-    simulation.RunStep();
+  if (isLooping) {
+    background(0);
+    if (startSimulation) {
+      simulation.RunStep();
+    }
+    ShowParameters();
   }
-  ShowParameters();
   if (saveScreenshot) {
-   SaveScreenshot();
-   saveScreenshot = false;
+    SaveScreenshot();
+    saveScreenshot = false;
   }
   ShowButtons();
 }
 
 public void mousePressed() {
   if (startButton.IsHoveringOver()) {
-    startSimulation = true;
-    CreateNewSimulation();
+    StartButtonPressed();
   } else if (saveCanvasButton.IsHoveringOver()) {
-    saveScreenshot = true;
+    SaveScreenshotButtonPressed();
   } else if (loadSettingsButton.IsHoveringOver()) {
-    settings = LoadSettings();
-    SetWindowParameters(settings);
+    LoadSettingsButtonPressed();
     for (Button button : allButtons) button.Resize(floor(GetValueFromSettings("buttonFontSize")));
     PlaceButtons();
   } else if (saveDefaultSettingsButton.IsHoveringOver()) SaveSettings(CreateDefaultSettings());
+}
+
+public void keyPressed() {
+  if (key == ' ') {
+    PauseButtonPressed();
+  } else if (key == 'r') {
+    StartButtonPressed();
+  } else if (key == 'l') {
+    LoadSettingsButtonPressed();
+  } else if (key == 's') {
+    SaveScreenshotButtonPressed();
+  }
+}
+public void PauseButtonPressed() {
+  isLooping = !isLooping;
+}
+
+public void StartButtonPressed() {
+  startSimulation = true;
+  CreateNewSimulation();
+  isLooping = true;
+}
+public void LoadSettingsButtonPressed() {
+  settings = LoadSettings();
+  SetWindowParameters(settings);
+}
+public void SaveScreenshotButtonPressed() {
+  saveScreenshot = true;
 }
 
 public void SaveScreenshot() {
@@ -88,7 +118,7 @@ public void ShowParameters() {
   posY -= fontSize + 5;
   text("Maximum error: " + simulation.maxError, posX, posY);
   posY -= fontSize + 5;
-  if (simulation.measuredError == 0) text("Measured error: N/A", posX, posY);
+  if (simulation.measuredError == -1) text("Measured error: N/A", posX, posY);
   else text("Measured error: " + simulation.measuredError, posX, posY);
 }
 
@@ -101,7 +131,7 @@ public void ShowButtons() {
 
 public void CreateButtons() {
   int btnFontSize = floor(GetValueFromSettings("buttonFontSize"));
-  startButton = new Button(10, 10, btnFontSize,  color(10, 220, 10), color(20, 255, 20), color(15), "Re/Start");
+  startButton = new Button(10, 10, btnFontSize, color(10, 220, 10), color(20, 255, 20), color(15), "Re/Start");
   saveCanvasButton = new Button(10, 10, btnFontSize, color(150), color(200), color(15), "Save canvas");
   loadSettingsButton = new Button(10, 10, btnFontSize, color(150), color(200), color(15), "Load settings");
   saveDefaultSettingsButton = new Button(10, 10, btnFontSize, color(150), color(200), color(15), "Save default settings");
@@ -150,7 +180,7 @@ public Table LoadSettings() {
       String[] splitLine = line.split("=");
       float newValue = PApplet.parseFloat(splitLine[1]);
       if (splitLine.length > 1 & !(newValue != newValue)) { // second check if NaN (weird processing thing)
-        TableRow oldRow = settings.findRow(splitLine[0], "property"); // <---------------------------------------------------------------- what if the row does not exist???
+        TableRow oldRow = settings.findRow(splitLine[0], "property");
         if (oldRow != null) {
           TableRow newRow = newSettings.addRow();
           newRow.setString("property", splitLine[0]);
@@ -204,7 +234,7 @@ public Table CreateDefaultSettings() {
   settings.setString(11, "property", "maxError");
   settings.setFloat(11, "value", 10);
   settings.setString(12, "property", "buttonFontSize");
-  settings.setFloat(12, "value", 20);
+  settings.setFloat(12, "value", 16);
 
   return settings;
 }
@@ -231,13 +261,13 @@ public boolean fileExists(String fileName) {
 }
 
 public void SetWindowParameters(Table settings) {
-  surface.setTitle("Simple drone swarm signal detection simulation");
+  surface.setTitle("Drone swarm signal detection simulation");
   int windowSize = PApplet.parseInt(settings.findRow("worldSize", "property").getFloat("value"));
   surface.setSize(windowSize, windowSize);
   surface.setLocation(10, 10);
   PlaceButtons();
 }
-class Button { //<>// //<>//
+class Button { //<>//
 
   int padding = 5;
   int posX, posY, wid, hei, textX, textY, textSize;
@@ -429,7 +459,7 @@ class Simulation {
     this.droneCount = droneCount;
     this.droneSize = droneSize;
     this.droneCollisionRange = droneCollisionRange;
-    this.gatherCircleRadius = gatherCircleRadius;
+    this.gatherCircleRadius = gatherCircleRadius == 0 ? ceil(sqrt(2) * (sqrt(droneCount)*droneCollisionRange)) : gatherCircleRadius;
     this.droneMaxSpeed = droneMaxSpeed;
     this.droneCenterPower = droneCenterPower;
     this.droneCollisionPower = droneCollisionPower;
@@ -439,7 +469,7 @@ class Simulation {
     this.tresholdMult = tresholdMult;
     this.signalSize = signalSize;
     this.maxError = maxError;
-    this.measuredError = 0;
+    this.measuredError = -1;
 
     for (int i = 0; i < droneCount; i = i+1) {
       drones.add(createDrone(i));
@@ -502,20 +532,22 @@ class Simulation {
     }
     ArrayList<PVector> allIntersections = new ArrayList<PVector>();
     for (int i = 0; i < drones.size() -1; i++) {
+        Drone curDrone = drones.get(i);
       for (int j = i+1; j < drones.size(); j++) {
-        ArrayList<PVector> newIntersections = Intersect2Circles(drones.get(i).position, drones.get(i).distance, drones.get(j).position, drones.get(j).distance);
+        ArrayList<PVector> newIntersections = IntersectTwoCircles(curDrone.position, curDrone.distance, drones.get(j).position, drones.get(j).distance);
         if (newIntersections != null) {
           allIntersections.addAll(newIntersections);
         }
       }
     }
+    ShowIntersections(allIntersections);
     ArrayList<PVector> closestCluster = FindCluster(allIntersections);
+    this.measuredError = CalculateMeasuredError(closestCluster);
     for (PVector intersection : closestCluster) {
       fill(0, 0, 255);
       rect (intersection.x, intersection.y, 8, 8);
     }
-    
-    measuredError = CalculateMeasuredError(closestCluster);
+
 
     stepNumber++;
     snapshot = get();
@@ -548,52 +580,44 @@ class Simulation {
     return newVector;
   }
 
-  public ArrayList<PVector> Intersect2Circles(PVector A, float a, PVector B, float b ) {
+  // modified code original for JavaScript by wabis: http://walter.bislins.ch/blog/index.asp?page=Schnittpunkte+zweier+Kreise+berechnen+%28JavaScript%29
+  public ArrayList<PVector> IntersectTwoCircles(PVector posA, float radiusA, PVector posB, float radiusB ) {
+    ArrayList<PVector> newPoints = new ArrayList<PVector>();
 
-    float AB0 = B.x - A.x;
-    float AB1 = B.y - A.y;
+    float pointAB0 = posB.x - posA.x;
+    float pointAB1 = posB.y - posA.y;
+    if (posA.dist(posB) == 0) return null;
+    float c = sqrt( pointAB0 * pointAB0 + pointAB1 * pointAB1 );
+    if (c == 0) return null;
 
-    float c = sqrt( AB0 * AB0 + AB1 * AB1 );
-    if (c == 0) {
-      // same center: A = B
-      return null;
-    }
+    float x = (sq(radiusA) + sq(c) - sq(radiusB)) / (2*c);
+    float y = sq(radiusA) - sq(x);
+    if (y < 0) return null;
 
-    float x = (a*a + c*c - b*b) / (2*c);
-    float y = a*a - x*x;
-    if (y < 0) {
-      // no intersection
-      return null;
-    }
-    if (y > 0) 
+    if (y > 0) {
       y = sqrt( y );
+    }
 
-    // compute unit vectors ex and ey
-    float ex0 = AB0 / c;
-    float ex1 = AB1 / c;
+    float ex0 = pointAB0 / c;
+    float ex1 = pointAB1 / c;
     float ey0 = -ex1;
     float ey1 =  ex0;
-    float Q1x = A.x + x * ex0;
-    float Q1y = A.y + x * ex1;
+    float Q1x = posA.x + x * ex0;
+    float Q1y = posA.y + x * ex1;
+    float Q2x;
+    float Q2y;
 
-    ArrayList<PVector> newPoints = new ArrayList<PVector>();
     if (y == 0) {
-      // one touch point
       newPoints.add(new PVector(Q1x, Q1y));
+    } else {
+      Q2x = Q1x - y * ey0;
+      Q2y = Q1y - y * ey1;
+      Q1x += y * ey0;
+      Q1y += y * ey1;
+      newPoints.add(new PVector(Q1x, Q1y));
+      newPoints.add(new PVector(Q2x, Q2y));
     }
 
-    // two intersections
-    float Q2x = Q1x - y * ey0;
-    float Q2y = Q1y - y * ey1;
-    Q1x += y * ey0;
-    Q1y += y * ey1;
-    newPoints.add(new PVector(Q1x, Q1y));
-    newPoints.add(new PVector(Q2x, Q2y));
-
-    fill(255, 2, 2, 80);
-    int size = 8;
-    rect (Q1x-size/2, Q1y-size/2, size, size);
-    rect (Q2x-size/2, Q2y-size/2, size, size);
     return newPoints;
   }
 
@@ -616,6 +640,14 @@ class Simulation {
       }
     }
     return biggestCluster;
+  }
+
+  public void ShowIntersections(ArrayList<PVector> positions) {
+    for (PVector position : positions) {
+      fill(255, 2, 2, 80);
+      int size = 8;
+      rect (position.x-size/2, position.y-size/2, size, size);
+    }
   }
 
   public void ShowSignal() {

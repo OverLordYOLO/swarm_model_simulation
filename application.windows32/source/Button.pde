@@ -1,4 +1,4 @@
-class Button { //<>// //<>//
+class Button { //<>//
 
   int padding = 5;
   int posX, posY, wid, hei, textX, textY, textSize;

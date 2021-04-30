@@ -72,10 +72,12 @@ class Simulation {
       break;
     case 1: 
       SecondStep_LocateSignal();
+      break;
+    case 2:
+      Evaluate();
+      image(snapshot, 0, 0);
       isFinished = true;
       break;
-    default:
-      image(snapshot, 0, 0);
     }
   }
 
@@ -127,7 +129,11 @@ class Simulation {
 
     stepNumber++;
     snapshot = get();
+  }
+
+  void Evaluate() {
     isSuccessful = this.measuredError < this.maxError;
+    stepNumber++;
   }
 
   float CalculateMeasuredError(ArrayList<PVector> cluster) {

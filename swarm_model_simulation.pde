@@ -19,7 +19,6 @@ void setup() {
   isLooping = true;
   settings = CreateDefaultSettings();
   CreateButtons();
-  startSimulation = false;
   SetWindowParameters(settings);
   CreateNewSimulation();
   if (!fileExists("settings.txt")) {
@@ -71,7 +70,6 @@ void PauseButtonPressed() {
 }
 
 void StartButtonPressed() {
-  startSimulation = true;
   CreateNewSimulation();
   isLooping = true;
 }

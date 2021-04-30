@@ -95,6 +95,12 @@ class Simulation {
     if (!moving) {
       stepNumber++;
     }
+
+    noFill();
+    colorMode(RGB);
+    stroke(255);
+    strokeWeight(1);
+    circle(averagePosition.x, averagePosition.y, gatherCircleRadius);
   }
 
   void SecondStep_LocateSignal() {

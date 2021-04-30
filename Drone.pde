@@ -75,12 +75,9 @@ class Drone {
     return drone1.position.dist(drone2.position);
     // return dist(b1.x, b1.y, b2.x, b2.y);
   }
-  float angleBetween(Drone b1, Drone b2) { 
-    return PVector.angleBetween(b1.velocity, b2.velocity);
-  }
 
   void setDistanceToPoint(PVector point) {
-    this.distance = position.dist(point);// * 2;
+    this.distance = position.dist(point);
   }
   void showFoundRadius() {
     stroke(c);

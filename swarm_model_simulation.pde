@@ -1,7 +1,6 @@
-//<>// //<>// //<>// //<>// //<>//
+//<>// //<>// //<>// //<>// //<>// //<>//
 Button startButton, saveCanvasButton, loadSettingsButton, saveDefaultSettingsButton;
 ArrayList<Button> allButtons;
-boolean startSimulation;
 
 Simulation simulation;
 
@@ -31,8 +30,9 @@ void setup() {
 void draw() {
   if (isLooping) {
     background(0);
-    if (startSimulation) {
+    if (!simulation.isFinished) {
       simulation.RunStep();
+      isLooping = !simulation.isFinished;
     }
     ShowParameters();
   }
@@ -107,7 +107,8 @@ void ShowParameters() {
   posY -= fontSize + 5;
   if (simulation.isFinished == true) {
     if (simulation.isSuccessful) text("Simulation successful", posX, posY);
-    else text("Simulation failed", posX, posY);}
+    else text("Simulation failed", posX, posY);
+  }
 }
 
 void ShowButtons() {

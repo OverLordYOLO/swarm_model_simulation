@@ -23,6 +23,7 @@ class Drone {
 
   void moveToPoint(PVector point, float maxDistance, float minDistance, ArrayList<Drone> drones) {
     float distance = point.dist(position);
+    PVector oldPosition = position.copy();
 
     stopped = distance <= ((maxDistance - minDistance) / 2);
     boolean isColliding = false;
@@ -49,8 +50,16 @@ class Drone {
     velocity.limit(maxSpeed);
     position.add(velocity);
     stopped = !moveTowards & !moveAway & !isColliding;
+
+    if (!stopped || true) DrawDirectionArrow(oldPosition, velocity.copy());
   }
 
+  void DrawDirectionArrow(PVector oldPosition, PVector  vel) {
+    PVector newPosition = PVector.add(oldPosition, vel.setMag(100)); //<>//
+    strokeWeight(2);
+    stroke(255);  // <----------------------- change to 255
+    line(oldPosition.x, oldPosition.y, newPosition.x, newPosition.y);
+  }
 
   void show() {
     beginShape();

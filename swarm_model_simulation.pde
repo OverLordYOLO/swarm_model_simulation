@@ -1,5 +1,4 @@
-//<>// //<>// //<>// //<>// //<>// //<>//
-Button startButton, saveCanvasButton, loadSettingsButton, saveDefaultSettingsButton;
+Button startButton, saveCanvasButton, loadSettingsButton, saveDefaultSettingsButton; //<>//
 ArrayList<Button> allButtons;
 
 Simulation simulation;
